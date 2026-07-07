@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HDI Predictor — Human Development Index</title>
+    <meta name="description" content="Predict the Human Development Index (HDI) of any country using machine learning. Enter key development indicators and get instant predictions.">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #0a0a1a;
+            --bg-secondary: #12122a;
+            --bg-card: rgba(255, 255, 255, 0.04);
+            --border-subtle: rgba(255, 255, 255, 0.08);
+            --text-primary: #f0f0ff;
+            --text-secondary: #a0a0c0;
+            --accent-blue: #6366f1;
+            --accent-purple: #a855f7;
+            --accent-emerald: #10b981;
+            --accent-amber: #f59e0b;
+            --gradient-primary: linear-gradient(135deg, #6366f1, #a855f7, #ec4899);
+            --gradient-card: linear-gradient(135deg, rgba(99,102,241,0.08), rgba(168,85,247,0.08));
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Animated background */
+        .bg-effects {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .bg-orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.3;
+            animation: float 20s ease-in-out infinite;
+        }
+
+        .bg-orb:nth-child(1) {
+            width: 500px;
+            height: 500px;
+            background: var(--accent-blue);
+            top: -10%;
+            right: -5%;
+            animation-delay: 0s;
+        }
+
+        .bg-orb:nth-child(2) {
+            width: 400px;
+            height: 400px;
+            background: var(--accent-purple);
+            bottom: -10%;
+            left: -5%;
+            animation-delay: -7s;
+        }
+
+        .bg-orb:nth-child(3) {
+            width: 300px;
+            height: 300px;
+            background: var(--accent-emerald);
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            animation-delay: -14s;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            25% { transform: translate(30px, -30px) scale(1.05); }
+            50% { transform: translate(-20px, 20px) scale(0.95); }
+            75% { transform: translate(20px, 10px) scale(1.02); }
+        }
+
+        /* Navigation */
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            padding: 1rem 2rem;
+            background: rgba(10, 10, 26, 0.8);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border-subtle);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .nav-brand {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-decoration: none;
+            color: var(--text-primary);
+        }
+
+        .nav-logo {
+            width: 36px;
+            height: 36px;
+            background: var(--gradient-primary);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            font-weight: 800;
+        }
+
+        .nav-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: var(--text-secondary);
+            padding: 0.5rem 1.2rem;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            border: 1px solid transparent;
+        }
+
+        .nav-links a:hover {
+            color: var(--text-primary);
+            background: rgba(255,255,255,0.06);
+            border-color: var(--border-subtle);
+        }
+
+        .nav-links a.active {
+            background: var(--gradient-primary);
+            color: white;
+            border-color: transparent;
+        }
+
+        .nav-links a.cta {
+            background: var(--gradient-primary);
+            color: white;
+            border-color: transparent;
+        }
+
+        .nav-links a.cta:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+
+        /* Hero Section */
+        .hero {
+            position: relative;
+            z-index: 1;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 8rem 2rem 4rem;
+            text-align: center;
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.4rem 1rem;
+            border-radius: 100px;
+            background: rgba(99, 102, 241, 0.1);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            color: #818cf8;
+            font-size: 0.8rem;
+            font-weight: 500;
+            margin-bottom: 2rem;
+            animation: fadeInUp 0.8s ease;
+        }
+
+        .hero-badge .dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #10b981;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+
+        .hero h1 {
+            font-size: clamp(2.5rem, 6vw, 4.5rem);
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            line-height: 1.1;
+            margin-bottom: 1.5rem;
+            animation: fadeInUp 0.8s ease 0.1s both;
+        }
+
+        .hero h1 span {
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero p {
+            font-size: clamp(1rem, 2vw, 1.2rem);
+            color: var(--text-secondary);
+            max-width: 700px;
+            line-height: 1.7;
+            margin-bottom: 3rem;
+            animation: fadeInUp 0.8s ease 0.2s both;
+        }
+
+        .hero-actions {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            justify-content: center;
+            animation: fadeInUp 0.8s ease 0.3s both;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.9rem 2rem;
+            border-radius: 14px;
+            font-size: 1rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: none;
+        }
+
+        .btn-primary {
+            background: var(--gradient-primary);
+            color: white;
+            box-shadow: 0 4px 20px rgba(99, 102, 241, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(99, 102, 241, 0.4);
+        }
+
+        .btn-secondary {
+            background: var(--bg-card);
+            color: var(--text-primary);
+            border: 1px solid var(--border-subtle);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255,255,255,0.08);
+            transform: translateY(-2px);
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Info Cards */
+        .cards-section {
+            position: relative;
+            z-index: 1;
+            padding: 4rem 2rem 6rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .section-label {
+            text-align: center;
+            color: var(--accent-blue);
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 0.75rem;
+        }
+
+        .section-title {
+            text-align: center;
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 3rem;
+            letter-spacing: -0.02em;
+        }
+
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .info-card {
+            background: var(--gradient-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 20px;
+            padding: 2rem;
+            transition: all 0.4s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .info-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--gradient-primary);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .info-card:hover {
+            transform: translateY(-4px);
+            border-color: rgba(99, 102, 241, 0.3);
+            box-shadow: 0 8px 40px rgba(99, 102, 241, 0.1);
+        }
+
+        .info-card:hover::before {
+            opacity: 1;
+        }
+
+        .card-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin-bottom: 1.2rem;
+        }
+
+        .card-icon.blue { background: rgba(99, 102, 241, 0.15); }
+        .card-icon.purple { background: rgba(168, 85, 247, 0.15); }
+        .card-icon.emerald { background: rgba(16, 185, 129, 0.15); }
+        .card-icon.amber { background: rgba(245, 158, 11, 0.15); }
+
+        .info-card h3 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .info-card p {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        /* HDI Scale */
+        .scale-section {
+            position: relative;
+            z-index: 1;
+            padding: 4rem 2rem 6rem;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .scale-bar {
+            display: flex;
+            border-radius: 16px;
+            overflow: hidden;
+            height: 60px;
+            margin-top: 2rem;
+            border: 1px solid var(--border-subtle);
+        }
+
+        .scale-segment {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 0.8rem;
+            transition: flex 0.3s ease;
+        }
+
+        .scale-segment:hover {
+            flex: 1.3;
+        }
+
+        .scale-segment .range {
+            font-size: 0.7rem;
+            opacity: 0.8;
+            font-weight: 400;
+        }
+
+        .scale-segment.low { background: linear-gradient(135deg, #dc2626, #ef4444); }
+        .scale-segment.medium { background: linear-gradient(135deg, #d97706, #f59e0b); }
+        .scale-segment.high { background: linear-gradient(135deg, #2563eb, #3b82f6); }
+        .scale-segment.very-high { background: linear-gradient(135deg, #059669, #10b981); }
+
+        /* Footer */
+        .footer {
+            position: relative;
+            z-index: 1;
+            padding: 2rem;
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        @media (max-width: 768px) {
+            .navbar {
+                padding: 0.8rem 1rem;
+            }
+            .hero {
+                padding: 7rem 1.5rem 3rem;
+            }
+            .hero-actions {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-effects">
+        <div class="bg-orb"></div>
+        <div class="bg-orb"></div>
+        <div class="bg-orb"></div>
+    </div>
+
+    <nav class="navbar">
+        <a href="/" class="nav-brand">
+            <div class="nav-logo">H</div>
+            <span class="nav-title">HDI Predictor</span>
+        </a>
+        <div class="nav-links">
+            <a href="/" class="active">Home</a>
+            <a href="/Prediction" class="cta">🎯 Predict HDI</a>
+        </div>
+    </nav>
+
+    <section class="hero">
+        <div class="hero-badge">
+            <span class="dot"></span>
+            Machine Learning Powered
+        </div>
+        <h1>Predict the <span>Human Development Index</span></h1>
+        <p>
+            The Human Development Index (HDI) is a composite statistic of life expectancy, education, and per capita income indicators.
+            Our ML model predicts a country's HDI score using key development metrics, helping understand where nations stand on
+            the global development scale — from Low to Very High human development.
+        </p>
+        <div class="hero-actions">
+            <a href="/Prediction" class="btn btn-primary">
+                🚀 Start Predicting
+            </a>
+            <a href="#learn-more" class="btn btn-secondary">
+                📖 Learn More
+            </a>
+        </div>
+    </section>
+
+    <section class="cards-section" id="learn-more">
+        <p class="section-label">Key Indicators</p>
+        <h2 class="section-title">What Drives the HDI?</h2>
+        <div class="cards-grid">
+            <div class="info-card">
+                <div class="card-icon blue">❤️</div>
+                <h3>Life Expectancy</h3>
+                <p>A long and healthy life, measured by life expectancy at birth. Reflects healthcare quality and overall living conditions.</p>
+            </div>
+            <div class="info-card">
+                <div class="card-icon purple">🎓</div>
+                <h3>Expected Schooling</h3>
+                <p>Expected years of schooling for children entering school. Indicates access to educational opportunities.</p>
+            </div>
+            <div class="info-card">
+                <div class="card-icon emerald">📚</div>
+                <h3>Mean Schooling</h3>
+                <p>Average years of education received by adults aged 25+. Reflects the existing education stock of a population.</p>
+            </div>
+            <div class="info-card">
+                <div class="card-icon amber">💰</div>
+                <h3>GNI per Capita</h3>
+                <p>Gross National Income per capita in PPP terms. Measures the economic standard of living and purchasing power.</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="scale-section">
+        <p class="section-label">Classification Scale</p>
+        <h2 class="section-title">HDI Categories</h2>
+        <div class="scale-bar">
+            <div class="scale-segment low">
+                Low
+                <span class="range">&lt; 0.550</span>
+            </div>
+            <div class="scale-segment medium">
+                Medium
+                <span class="range">0.550 – 0.699</span>
+            </div>
+            <div class="scale-segment high">
+                High
+                <span class="range">0.700 – 0.799</span>
+            </div>
+            <div class="scale-segment very-high">
+                Very High
+                <span class="range">≥ 0.800</span>
+            </div>
+        </div>
+    </section>
+
+    <footer class="footer">
+        <p>HDI Predictor · Built with Flask & Scikit-Learn · Machine Learning Project</p>
+    </footer>
+</body>
+</html>

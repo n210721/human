@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Predict HDI — HDI Predictor</title>
+    <meta name="description" content="Enter development indicators to predict HDI using ML.">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+        :root{--bg:#0a0a1a;--bg2:#12122a;--bgc:rgba(255,255,255,0.04);--brd:rgba(255,255,255,0.08);--t1:#f0f0ff;--t2:#a0a0c0;--ab:#6366f1;--ap:#a855f7;--ae:#10b981;--aa:#f59e0b;--gp:linear-gradient(135deg,#6366f1,#a855f7,#ec4899);--gc:linear-gradient(135deg,rgba(99,102,241,0.08),rgba(168,85,247,0.08))}
+        html{scroll-behavior:smooth}
+        body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--t1);min-height:100vh;overflow-x:hidden}
+        .bg-fx{position:fixed;inset:0;z-index:0;pointer-events:none}
+        .orb{position:absolute;border-radius:50%;filter:blur(80px);opacity:.3;animation:fl 20s ease-in-out infinite}
+        .orb:nth-child(1){width:500px;height:500px;background:var(--ap);top:-10%;right:-5%}
+        .orb:nth-child(2){width:400px;height:400px;background:var(--ab);bottom:-10%;left:-5%;animation-delay:-7s}
+        .orb:nth-child(3){width:300px;height:300px;background:var(--ae);top:50%;left:50%;transform:translate(-50%,-50%);animation-delay:-14s}
+        @keyframes fl{0%,100%{transform:translate(0,0) scale(1)}25%{transform:translate(30px,-30px) scale(1.05)}50%{transform:translate(-20px,20px) scale(.95)}75%{transform:translate(20px,10px) scale(1.02)}}
+        .nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:1rem 2rem;background:rgba(10,10,26,.8);backdrop-filter:blur(20px);border-bottom:1px solid var(--brd);display:flex;justify-content:space-between;align-items:center}
+        .nav-b{display:flex;align-items:center;gap:.5rem;text-decoration:none;color:var(--t1)}
+        .nav-l{width:36px;height:36px;background:var(--gp);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;font-weight:800}
+        .nav-t{font-size:1.1rem;font-weight:700;letter-spacing:-.02em}
+        .nav-lk{display:flex;gap:.5rem}
+        .nav-lk a{text-decoration:none;color:var(--t2);padding:.5rem 1.2rem;border-radius:10px;font-size:.9rem;font-weight:500;transition:all .3s;border:1px solid transparent}
+        .nav-lk a:hover{color:var(--t1);background:rgba(255,255,255,.06);border-color:var(--brd)}
+        .nav-lk a.act{background:var(--gp);color:#fff;border-color:transparent}
+        .pg{position:relative;z-index:1;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:7rem 2rem 4rem}
+        .fc{width:100%;max-width:600px;animation:fiu .8s ease}
+        .fh{text-align:center;margin-bottom:2.5rem}
+        .badge{display:inline-flex;align-items:center;gap:.5rem;padding:.4rem 1rem;border-radius:100px;background:rgba(99,102,241,.1);border:1px solid rgba(99,102,241,.3);color:#818cf8;font-size:.8rem;font-weight:500;margin-bottom:1.5rem}
+        .badge .dot{width:6px;height:6px;border-radius:50%;background:#10b981;animation:pu 2s ease-in-out infinite}
+        @keyframes pu{0%,100%{opacity:1}50%{opacity:.4}}
+        .fh h1{font-size:2.2rem;font-weight:800;letter-spacing:-.03em;margin-bottom:.75rem}
+        .fh h1 span{background:var(--gp);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+        .fh p{color:var(--t2);font-size:.95rem;line-height:1.6}
+        .card{background:var(--gc);border:1px solid var(--brd);border-radius:24px;padding:2.5rem;backdrop-filter:blur(10px);position:relative;overflow:hidden}
+        .card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--gp)}
+        .fg{margin-bottom:1.5rem}
+        .fg:last-of-type{margin-bottom:2rem}
+        .fl{display:flex;align-items:center;gap:.5rem;font-size:.9rem;font-weight:600;color:var(--t1);margin-bottom:.6rem}
+        .li{width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:.9rem}
+        .li.bl{background:rgba(99,102,241,.15)}.li.pu{background:rgba(168,85,247,.15)}.li.em{background:rgba(16,185,129,.15)}.li.am{background:rgba(245,158,11,.15)}
+        .hint{font-size:.78rem;color:var(--t2);margin-top:.35rem;padding-left:.5rem}
+        .fi{width:100%;padding:.9rem 1.2rem;border-radius:14px;border:1px solid var(--brd);background:rgba(255,255,255,.03);color:var(--t1);font-family:'Inter',sans-serif;font-size:1rem;font-weight:500;transition:all .3s;outline:none}
+        .fi::placeholder{color:rgba(160,160,192,.5)}
+        .fi:focus{border-color:var(--ab);box-shadow:0 0 0 3px rgba(99,102,241,.15);background:rgba(255,255,255,.06)}
+        .fi:hover:not(:focus){border-color:rgba(255,255,255,.15)}
+        .btn-p{width:100%;padding:1rem;border:none;border-radius:14px;background:var(--gp);color:#fff;font-family:'Inter',sans-serif;font-size:1.05rem;font-weight:700;cursor:pointer;transition:all .3s;box-shadow:0 4px 20px rgba(99,102,241,.3);display:flex;align-items:center;justify-content:center;gap:.5rem}
+        .btn-p:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(99,102,241,.4)}
+        .btn-p:active{transform:translateY(0)}
+        .bl-a{display:flex;align-items:center;justify-content:center;gap:.4rem;margin-top:1.5rem;text-align:center}
+        .bl-a a{color:var(--t2);text-decoration:none;font-size:.9rem;font-weight:500;transition:color .3s}
+        .bl-a a:hover{color:var(--t1)}
+        @keyframes fiu{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
+        .ft{position:relative;z-index:1;padding:2rem;text-align:center;color:var(--t2);font-size:.85rem;border-top:1px solid var(--brd)}
+        @media(max-width:768px){.nav{padding:.8rem 1rem}.pg{padding:6rem 1rem 3rem}.card{padding:1.5rem}.fh h1{font-size:1.7rem}}
+    </style>
+</head>
+<body>
+    <div class="bg-fx"><div class="orb"></div><div class="orb"></div><div class="orb"></div></div>
+
+    <nav class="nav">
+        <a href="/" class="nav-b">
+            <div class="nav-l">H</div>
+            <span class="nav-t">HDI Predictor</span>
+        </a>
+        <div class="nav-lk">
+            <a href="/">Home</a>
+            <a href="/Prediction" class="act">🎯 Predict HDI</a>
+        </div>
+    </nav>
+
+    <section class="pg">
+        <div class="fc">
+            <div class="fh">
+                <div class="badge"><span class="dot"></span> Enter Development Indicators</div>
+                <h1>Predict <span>HDI Score</span></h1>
+                <p>Enter the four key development indicators below and our ML model will predict the Human Development Index.</p>
+            </div>
+
+            <div class="card">
+                <form action="/predict" method="POST" id="predict-form">
+                    <div class="fg">
+                        <label class="fl" for="life-exp">
+                            <span class="li bl">❤️</span> Life Expectancy at Birth
+                        </label>
+                        <input type="number" step="0.1" id="life-exp" name="Life expectancy at birth" class="fi" placeholder="e.g. 72.5 (years)" required min="20" max="100">
+                        <p class="hint">Average lifespan in years (typical range: 50–89)</p>
+                    </div>
+
+                    <div class="fg">
+                        <label class="fl" for="exp-school">
+                            <span class="li pu">🎓</span> Expected Years of Schooling
+                        </label>
+                        <input type="number" step="0.1" id="exp-school" name="Expected years of schooling" class="fi" placeholder="e.g. 14.2 (years)" required min="0" max="25">
+                        <p class="hint">Years a child is expected to attend school (typical range: 5–22)</p>
+                    </div>
+
+                    <div class="fg">
+                        <label class="fl" for="mean-school">
+                            <span class="li em">📚</span> Mean Years of Schooling
+                        </label>
+                        <input type="number" step="0.1" id="mean-school" name="Mean years of schooling" class="fi" placeholder="e.g. 8.5 (years)" required min="0" max="20">
+                        <p class="hint">Average education of adults aged 25+ (typical range: 2–14)</p>
+                    </div>
+
+                    <div class="fg">
+                        <label class="fl" for="gni">
+                            <span class="li am">💰</span> Gross National Income per Capita
+                        </label>
+                        <input type="number" step="1" id="gni" name="Gross national income per capita" class="fi" placeholder="e.g. 15000 (PPP $)" required min="100" max="200000">
+                        <p class="hint">GNI per capita in PPP terms (typical range: 500–130,000)</p>
+                    </div>
+
+                    <button type="submit" class="btn-p" id="btn-predict">🚀 Predict HDI Score</button>
+                </form>
+
+                <div class="bl-a"><a href="/">← Back to Home</a></div>
+            </div>
+        </div>
+    </section>
+
+    <footer class="ft"><p>HDI Predictor · Built with Flask & Scikit-Learn · Machine Learning Project</p></footer>
+</body>
+</html>
